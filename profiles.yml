@@ -1,0 +1,12 @@
+visit_conversion:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: crm.duckdb
+      schema: main
+      threads: 4
+      attach:
+        - path: raw.duckdb
+          alias: raw
+          read_only: true

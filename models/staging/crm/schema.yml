@@ -1,0 +1,35 @@
+version: 2
+models:
+  - name: stg_crm__accounts
+    description: "One row per account; raw attributes are preserved."
+    columns:
+      - name: account_id
+        data_tests: [not_null, unique]
+  - name: stg_crm__visits
+    description: "One row per valid visit; no joins or aggregation."
+    columns:
+      - name: visit_id
+        data_tests: [not_null, unique]
+      - name: account_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_crm__accounts')
+                field: account_id
+      - name: visited_at
+        data_tests: [not_null]
+  - name: stg_crm__opportunities
+    description: "One row per valid opportunity; no joins or aggregation."
+    columns:
+      - name: opportunity_id
+        data_tests: [not_null, unique]
+      - name: account_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_crm__accounts')
+                field: account_id
+      - name: opportunity_at
+        data_tests: [not_null]

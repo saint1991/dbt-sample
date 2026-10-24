@@ -1,0 +1,15 @@
+[project]
+name = "dbt-sample"
+version = "0.1.0"
+description = "A sample project to show usage of DBT"
+readme = "README.md"
+authors = [
+    { name = "saint1991", email = "se.mizuno.tech@gmail.com" }
+]
+requires-python = ">=3.15"
+dependencies = [
+    "dbt>=2.0.9,<3",
+    "duckdb>=2.0.0",
+    "dbt-mcp>=2.7.0",
+]
+

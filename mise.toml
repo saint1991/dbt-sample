@@ -1,0 +1,22 @@
+[env]
+DO_NOT_TRACK = "1"
+
+[tools]
+python = "3.15.1"
+uv = "0.13.5"
+
+[tasks.mcp]
+description = "Start dbt MCP with local CLI and Semantic Layer tools"
+dir = "{{ config_root }}"
+raw = true
+run = "uv run --locked dbt-mcp"
+
+[tasks.mcp.env]
+MCP_TRANSPORT = "stdio"
+DBT_PROJECT_DIR = "{{ config_root }}"
+DBT_PROFILES_DIR = "{{ config_root }}"
+DBT_PATH = "{{ config_root }}/.venv/bin/dbt"
+DBT_MCP_ENABLE_DBT_CLI = "true"
+DBT_MCP_ENABLE_SEMANTIC_LAYER = "true"
+# dbt-mcp reads DBT_HOST, DBT_PROD_ENV_ID and DBT_TOKEN from .env.
+# See .env.example for the dbt Platform connection settings.

@@ -1,0 +1,17 @@
+version: 2
+models:
+  - name: int_first_opportunity_by_account
+    description: "One row per account with an opportunity; timestamp then ID determines the first."
+    columns:
+      - name: account_id
+        data_tests: [not_null, unique]
+  - name: int_visits_before_first_opportunity
+    description: "One row per visit on or before the first opportunity, or any visit if no opportunity exists."
+    columns:
+      - name: visit_id
+        data_tests: [not_null, unique]
+  - name: last_visits_before_opportunity
+    description: "One row per account with an eligible visit; latest timestamp then smallest ID wins."
+    columns:
+      - name: account_id
+        data_tests: [not_null, unique]
