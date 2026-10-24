@@ -1,0 +1,3 @@
+[mcp_servers.dbt-sample]
+command = "mise"
+args = ["run", "--quiet", "mcp"]

@@ -1,0 +1,10 @@
+version: 2
+sources:
+  - name: crm
+    description: "Preloaded CRM sample data in the read-only raw.duckdb database."
+    database: raw
+    schema: main
+    tables:
+      - name: accounts
+      - name: visits
+      - name: opportunities

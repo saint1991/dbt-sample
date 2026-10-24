@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "dbt-sample": {
+      "type": "stdio",
+      "command": "mise",
+      "args": ["run", "--quiet", "mcp"]
+    }
+  }
+}

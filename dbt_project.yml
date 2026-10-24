@@ -1,0 +1,17 @@
+name: visit_conversion
+version: '1.0.0'
+config-version: 2
+profile: visit_conversion
+require-dbt-version: [">=2.0.9", "<3.0.0"]
+model-paths: [models]
+test-paths: [tests]
+analysis-paths: [analyses]
+clean-targets: [target, dbt_packages]
+models:
+  visit_conversion:
+    staging:
+      +materialized: table
+    intermediate:
+      +materialized: table
+    marts:
+      +materialized: table

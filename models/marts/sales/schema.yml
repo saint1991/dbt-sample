@@ -1,0 +1,49 @@
+version: 2
+models:
+  - name: accounts
+    description: "One row per master account, including accounts without visits or opportunities."
+    semantic_model:
+      enabled: true
+    agg_time_dimension: last_visit_at
+    columns:
+      - name: account_id
+        entity:
+          name: account
+          type: primary
+        data_tests: [not_null, unique]
+      - name: last_visit_at
+        granularity: day
+        dimension:
+          type: time
+      - name: industry
+        dimension:
+          type: categorical
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['manufacturing', 'retail', 'software']
+      - name: has_converted
+        description: "True only when an eligible visit and first opportunity both exist."
+        data_tests: [not_null]
+    metrics:
+      - name: visited_account_count
+        label: Visited account count
+        description: "Accounts with a visit on or before the first opportunity, or a visit and no opportunity."
+        type: simple
+        agg: sum
+        expr: "case when last_visit_at is not null then 1 else 0 end"
+      - name: converted_account_count
+        label: Converted account count
+        description: "Eligible visited accounts that have a first opportunity."
+        type: simple
+        agg: sum
+        expr: "case when has_converted then 1 else 0 end"
+
+# This metadata does not execute Semantic Layer queries.
+metrics:
+  - name: account_conversion_rate
+    label: Account conversion rate
+    description: "Converted accounts / eligible visited accounts; never opportunity events / visit events."
+    type: ratio
+    numerator: converted_account_count
+    denominator: visited_account_count
