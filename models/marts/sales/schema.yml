@@ -7,10 +7,19 @@ models:
     agg_time_dimension: last_visit_at
     columns:
       - name: account_id
+        description: "Identifier of an account; one row per account in this model."
         entity:
           name: account
           type: primary
         data_tests: [not_null, unique]
+      - name: account_name
+        description: "Account display name."
+        dimension:
+          type: categorical
+      - name: owner
+        description: "Person responsible for the account."
+        dimension:
+          type: categorical
       - name: last_visit_at
         granularity: day
         dimension:
@@ -24,6 +33,8 @@ models:
                 values: ['manufacturing', 'retail', 'software']
       - name: has_converted
         description: "True only when an eligible visit and first opportunity both exist."
+        dimension:
+          type: categorical
         data_tests: [not_null]
     metrics:
       - name: visited_account_count

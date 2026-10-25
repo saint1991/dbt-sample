@@ -7,10 +7,22 @@ models:
         data_tests: [not_null, unique]
   - name: stg_crm__visits
     description: "One row per valid visit; no joins or aggregation."
+    semantic_model:
+      enabled: true
+      name: visits
+    agg_time_dimension: visited_at
     columns:
       - name: visit_id
+        description: "Identifier of a single visit."
+        entity:
+          type: primary
+          name: visit
         data_tests: [not_null, unique]
       - name: account_id
+        description: "Account visited; joins to the account entity on the accounts mart."
+        entity:
+          type: foreign
+          name: account
         data_tests:
           - not_null
           - relationships:
@@ -18,13 +30,36 @@ models:
                 to: ref('stg_crm__accounts')
                 field: account_id
       - name: visited_at
+        description: "Timestamp of the visit; default time dimension for visit metrics."
+        granularity: day
+        dimension:
+          type: time
         data_tests: [not_null]
+    metrics:
+      - name: visit_count
+        description: "Number of valid visit events, including repeated visits to the same account."
+        type: simple
+        label: Visit count
+        agg: count
+        expr: visit_id
   - name: stg_crm__opportunities
     description: "One row per valid opportunity; no joins or aggregation."
+    semantic_model:
+      enabled: true
+      name: opportunities
+    agg_time_dimension: opportunity_at
     columns:
       - name: opportunity_id
+        description: "Identifier of a single opportunity."
+        entity:
+          type: primary
+          name: opportunity
         data_tests: [not_null, unique]
       - name: account_id
+        description: "Account associated with the opportunity; joins to the account entity on the accounts mart."
+        entity:
+          type: foreign
+          name: account
         data_tests:
           - not_null
           - relationships:
@@ -32,4 +67,15 @@ models:
                 to: ref('stg_crm__accounts')
                 field: account_id
       - name: opportunity_at
+        description: "Timestamp of the opportunity; default time dimension for opportunity metrics."
+        granularity: day
+        dimension:
+          type: time
         data_tests: [not_null]
+    metrics:
+      - name: opportunity_count
+        description: "Number of valid opportunity events, including repeated opportunities for the same account."
+        type: simple
+        label: Opportunity count
+        agg: count
+        expr: opportunity_id

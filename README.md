@@ -178,6 +178,20 @@ having count(*) > 1
 | `relationships` | 訪問・商談の取引先IDが取引先モデルに存在すること |
 | `accepted_values` | 業種がmanufacturing・retail・softwareのいずれかであること |
 
+### Semanticモデルの定義
+
+Semantic定義は、モデルのSQLと同じディレクトリの`schema.yml`に記載しています。`semantic_model.enabled: true`で有効化し、各列の`entity`・`dimension`でキーと集計軸を宣言します。
+
+| 定義ファイル | Semanticモデル | Entity | Dimension・指標 |
+| --- | --- | --- | --- |
+| `models/staging/crm/schema.yml` | `visits` | `visit_id`＝primaryの`visit`、`account_id`＝foreignの`account` | `visited_at`（日単位の時間軸）、訪問イベント数 |
+| 同上 | `opportunities` | `opportunity_id`＝primaryの`opportunity`、`account_id`＝foreignの`account` | `opportunity_at`（日単位の時間軸）、商談イベント数 |
+| `models/marts/sales/schema.yml` | `accounts` | `account_id`＝primaryの`account` | 取引先名・担当者・業種・商談化フラグ、最終対象訪問日時、取引先件数・商談率 |
+
+訪問・商談から取引先属性への結合経路は、共通のEntity名`account`で宣言します。訪問と商談の`foreign`同士を直接結合する定義ではありません。初回商談と最終対象訪問の対応付けは引き続きIntermediate／MartのSQLで行い、商談率はその結果に基づく取引先単位の指標です。訪問イベント数と商談イベント数を単純に割った値とは異なります。
+
+`dbt build`での定義読み込みと`target/semantic_manifest.json`への3モデル・5指標の出力を確認しています。現在の商談率計算手順は`dbt show`による分析SQLの実行です。[Semanticモデルの公式仕様](https://docs.getdbt.com/docs/build/semantic-models?version=2)
+
 ### 6. MCPの実行とClaude Code／Codexへの接続
 
 [公式dbt MCP](https://github.com/dbt-labs/dbt-mcp)で、AIからローカルのモデル定義等を利用できる。
@@ -222,7 +236,7 @@ mise run mcp
 │   │   ├── stg_crm__accounts.sql      # idをaccount_idへ改名、属性を保持
 │   │   ├── stg_crm__visits.sql        # 欠損除外・空白除去・訪問日追加
 │   │   ├── stg_crm__opportunities.sql # 欠損除外・空白除去
-│   │   └── schema.yml                # 説明、一意性・参照整合性などのテスト
+│   │   └── schema.yml                # 説明・テスト・訪問/商談のSemantic定義
 │   ├── intermediate/sales/           # JOIN・行の選択・粒度の変更
 │   │   ├── int_first_opportunity_by_account.sql     # 取引先ごとの初回商談
 │   │   ├── int_visits_before_first_opportunity.sql # 初回商談以前の訪問
