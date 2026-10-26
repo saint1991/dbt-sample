@@ -192,6 +192,18 @@ Semantic定義は、モデルのSQLと同じディレクトリの`schema.yml`に
 
 `dbt build`での定義読み込みと`target/semantic_manifest.json`への3モデル・5指標の出力を確認しています。現在の商談率計算手順は`dbt show`による分析SQLの実行です。[Semanticモデルの公式仕様](https://docs.getdbt.com/docs/build/semantic-models?version=2)
 
+### 列リネージの生成
+
+```sh
+mise run lineage
+```
+
+strict静的解析でコンパイルし、`target/info_schema/`に列リネージを生成します。生成した列の対応は、次で確認できます。
+
+```sh
+uv run dbt show --info column_lineage --limit 20 --output json --profiles-dir .
+```
+
 ### 6. MCPの実行とClaude Code／Codexへの接続
 
 [公式dbt MCP](https://github.com/dbt-labs/dbt-mcp)で、AIからローカルのモデル定義等を利用できる。
