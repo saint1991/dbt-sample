@@ -9,6 +9,7 @@ analysis-paths: [analyses]
 clean-targets: [target, dbt_packages]
 models:
   visit_conversion:
+    +static_analysis: strict
     staging:
       +materialized: table
     intermediate:

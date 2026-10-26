@@ -5,6 +5,11 @@ DO_NOT_TRACK = "1"
 python = "3.15.1"
 uv = "0.13.5"
 
+[tasks.lineage]
+description = "Generate column-level lineage with strict static analysis"
+dir = "{{ config_root }}"
+run = "uv run --locked dbt compile --generate-info-schema --static-analysis strict --profiles-dir ."
+
 [tasks.mcp]
 description = "Start dbt MCP with local CLI and Semantic Layer tools"
 dir = "{{ config_root }}"
