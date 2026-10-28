@@ -79,3 +79,22 @@ models:
         label: Opportunity count
         agg: count
         expr: opportunity_id
+
+# Advanced metrics stay beside their underlying event models.
+# These describe visit events, not the account-level attribution on the accounts mart.
+metrics:
+  - name: visit_count_7d
+    label: Visit count over trailing 7 days
+    description: "Rolling count of visit events over 7 days, using visited_at; repeated visits count separately. Query by metric_time."
+    type: cumulative
+    input_metric: visit_count
+    window: 7 days
+  - name: visit_to_opportunity_rate_30d
+    label: Visit to opportunity conversion rate within 30 days
+    description: "Event conversion rate linking opportunities to the closest eligible visit for the same account within 30 days; not the first-opportunity account conversion rate."
+    type: conversion
+    entity: account
+    calculation: conversion_rate
+    base_metric: visit_count
+    conversion_metric: opportunity_count
+    window: 30 days

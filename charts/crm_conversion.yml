@@ -1,0 +1,107 @@
+# yaml-language-server: $schema=https://docs.dbtcharts.com/schema/board.json
+title: 取引先の商談化状況
+source: crm
+extends: paper
+text: |
+  初回商談以前の対象訪問がある取引先のうち、商談化した割合です。
+  訪問イベント数・商談イベント数を割った値ではありません。
+  業種を未選択にすると、全業種を表示します。
+variables:
+  industry:
+    label: 業種（未選択は全業種）
+    options:
+      static: [manufacturing, retail, software]
+queries:
+  eligible_accounts:
+    sql: |
+      select *
+      from main.accounts
+      where last_visit_at is not null
+        and {{ filter('industry', industry) }}
+  totals:
+    sql: |
+      select
+          count(*) as visited_account_count,
+          count(*) filter (where has_converted) as converted_account_count,
+          1.0 * count(*) filter (where has_converted)
+              / nullif(count(*), 0) as conversion_rate
+      from {{ queries.eligible_accounts }}
+    formats:
+      visited_account_count: integer
+      converted_account_count: integer
+      conversion_rate: percent_whole
+  by_industry:
+    sql: |
+      select
+          industry,
+          count(*) as visited_account_count,
+          count(*) filter (where has_converted) as converted_account_count,
+          1.0 * count(*) filter (where has_converted)
+              / nullif(count(*), 0) as conversion_rate
+      from {{ queries.eligible_accounts }}
+      group by industry
+      order by industry
+    formats:
+      visited_account_count: integer
+      converted_account_count: integer
+      conversion_rate: percent_whole
+  industry_summary:
+    sql: |
+      select
+          industry as "業種",
+          visited_account_count as "対象訪問済み取引先数",
+          converted_account_count as "商談化取引先数",
+          conversion_rate as "商談率"
+      from {{ queries.by_industry }}
+    formats:
+      商談率: percent_whole
+  account_details:
+    sql: |
+      select
+          account_name as "取引先",
+          industry as "業種",
+          owner as "担当者",
+          case when last_visit_at is not null then '対象' else '対象外' end as "分母の対象",
+          case when has_converted then '商談化' else '未商談化' end as "商談化状況"
+      from main.accounts
+      where {{ filter('industry', industry) }}
+      order by industry, account_name
+charts:
+  conversion_rate:
+    type: kpi
+    query: totals
+    value: conversion_rate
+    label: 商談率（商談化 ÷ 対象訪問済み）
+  visited_accounts:
+    type: kpi
+    query: totals
+    value: visited_account_count
+    label: 対象訪問済み取引先数
+  converted_accounts:
+    type: kpi
+    query: totals
+    value: converted_account_count
+    label: 商談化取引先数
+  industry_rate:
+    type: bar
+    query: by_industry
+    title: 業種別の商談率
+    subtitle: 分子と分母の件数は下の表で確認できます。
+    x: industry
+    y: conversion_rate
+    x_label: 業種
+    y_label: 商談率
+    height: 280
+  industry_table:
+    type: table
+    query: industry_summary
+    title: 業種別の分子・分母
+  accounts_table:
+    type: table
+    query: account_details
+    title: 全取引先の対象判定
+rows:
+  - cols: [conversion_rate, visited_accounts, converted_accounts]
+  - industry_rate
+  - industry_table
+  - accounts_table

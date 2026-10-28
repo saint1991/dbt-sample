@@ -2,8 +2,19 @@
 DO_NOT_TRACK = "1"
 
 [tools]
-python = "3.15.1"
+python = "3.14.9"
 uv = "0.13.5"
+
+[tasks.build]
+description = "Build dbt models and run tests"
+dir = "{{ config_root }}"
+run = "uv run --locked dbt build --profiles-dir ."
+
+[tasks.charts]
+description = "Serve the CRM conversion dashboard"
+depends = ["build"]
+dir = "{{ config_root }}"
+run = "uvx --python 3.14 --from dbt-charts==0.10.0 dct serve --port 8081"
 
 [tasks.lineage]
 description = "Generate column-level lineage with strict static analysis"
