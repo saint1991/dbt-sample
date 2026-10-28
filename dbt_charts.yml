@@ -1,0 +1,6 @@
+# Local dbt Charts sources; dbt still builds the models through profiles.yml.
+sources:
+  crm:
+    type: duckdb
+    path: ./crm.duckdb
+    schema: main

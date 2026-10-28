@@ -58,3 +58,13 @@ metrics:
     type: ratio
     numerator: converted_account_count
     denominator: visited_account_count
+  - name: unconverted_visited_account_count
+    label: Unconverted visited account count
+    description: "Eligible visited accounts minus converted accounts, using the same last-visit attribution and time dimension."
+    type: derived
+    expr: visited - converted
+    input_metrics:
+      - name: visited_account_count
+        alias: visited
+      - name: converted_account_count
+        alias: converted

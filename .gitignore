@@ -10,3 +10,6 @@ __pycache__/
 .user.yml
 dbt_internal_packages/
 .env
+renders/
+.agents/skills/dct-*/
+.claude/skills/dct-*/

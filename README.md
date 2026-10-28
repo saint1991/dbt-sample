@@ -149,6 +149,22 @@ uv run dbt show --select account_conversion --profiles-dir .
 uv run dbt show --select account_conversion_by_industry --profiles-dir .
 ```
 
+### dbt Chartsのサンプル
+
+`charts/crm_conversion.yml`で、商談率・対象訪問済み取引先数・商談化取引先数、業種別の比較、全取引先の対象判定を表示します。業種を選択すると各表示を絞り込めます。全業種では商談率60%・対象5社・商談化3社が期待値です。
+
+```sh
+# 初回・モデルの変更後にMartを作成
+uv run dbt build --profiles-dir .
+
+# ダッシュボードを起動
+mise run charts
+```
+
+起動後、[取引先の商談化状況](http://localhost:8080/crm_conversion/)を開きます。終了はCtrl+Cです。`dbt_charts.yml`で既存の`crm.duckdb`を接続先に指定しており、Semantic Layerを経由せずSQLでMartを集計します。
+
+ChartsはCore v1を依存に持つため、dbt v2の仮想環境と分離しています。タスクは`uvx --python 3.14 --from dbt-charts==0.10.0 dct serve --port 8080`を実行します。初回はネット接続が必要です。Python 3.14はChartsの宣言上の対応範囲外ですが、このサンプルの描画を確認しています。
+
 ### 5. テスト
 
 ```sh
@@ -188,9 +204,26 @@ Semantic定義は、モデルのSQLと同じディレクトリの`schema.yml`に
 | 同上 | `opportunities` | `opportunity_id`＝primaryの`opportunity`、`account_id`＝foreignの`account` | `opportunity_at`（日単位の時間軸）、商談イベント数 |
 | `models/marts/sales/schema.yml` | `accounts` | `account_id`＝primaryの`account` | 取引先名・担当者・業種・商談化フラグ、最終対象訪問日時、取引先件数・商談率 |
 
-訪問・商談から取引先属性への結合経路は、共通のEntity名`account`で宣言します。訪問と商談の`foreign`同士を直接結合する定義ではありません。初回商談と最終対象訪問の対応付けは引き続きIntermediate／MartのSQLで行い、商談率はその結果に基づく取引先単位の指標です。訪問イベント数と商談イベント数を単純に割った値とは異なります。
+訪問・商談から取引先属性への通常の結合経路は、共通のEntity名`account`で宣言します。通常の属性JOINで訪問と商談の`foreign`同士を直接結合する定義ではありません。下記の`conversion`型は、共通Entityと時間窓を指定してイベントを対応付ける別の仕組みです。
 
-`dbt build`での定義読み込みと`target/semantic_manifest.json`への3モデル・5指標の出力を確認しています。現在の商談率計算手順は`dbt show`による分析SQLの実行です。[Semanticモデルの公式仕様](https://docs.getdbt.com/docs/build/semantic-models?version=2)
+初回商談と最終対象訪問の対応付けは引き続きIntermediate／MartのSQLで行い、既存の`account_conversion_rate`はその結果に基づく取引先単位の指標です。訪問イベント数と商談イベント数を単純に割った値とは異なります。
+
+#### simple以外の指標例
+
+いずれも、モデルの隣の`schema.yml`内のトップレベル`metrics:`に定義しています。
+
+| 型 | 指標名 | 計算・意味 | 定義ファイル |
+| --- | --- | --- | --- |
+| `ratio` | `account_conversion_rate` | 商談化取引先数 ÷ 対象訪問済み取引先数（既存） | `models/marts/sales/schema.yml` |
+| `derived` | `unconverted_visited_account_count` | 対象訪問済み取引先数 − 商談化取引先数 | 同上 |
+| `cumulative` | `visit_count_7d` | 各日を基準とする直近7日間の訪問イベント数。繰り返し訪問も数える | `models/staging/crm/schema.yml` |
+| `conversion` | `visit_to_opportunity_rate_30d` | 同じ取引先で30日以内の商談イベントを直近の対象訪問へ対応付けるイベント転換率 | 同上 |
+
+`derived`は`expr`と`input_metrics`、`cumulative`は`input_metric`と`window`で指定します。累積指標は`metric_time`を日単位で指定して問い合わせる想定で、既存の`time_spine_daily`を時間軸に使います。時間軸は2026年分なので、他年のデータを追加する場合は延長してください。
+
+`conversion`は`base_metric`・`conversion_metric`・`entity`・`window`を指定します。30日以内のイベント対応付けの例であり、取引先単位の`account_conversion_rate`を置き換えません。初回以外の商談も対象となります。
+
+`dbt build`での定義読み込み・既存25テストの成功と、`target/semantic_manifest.json`への3モデル・8指標の出力を確認しています。追加した指標のSemantic Layer経由のクエリ実行は未検証です。現在の商談率計算手順は`dbt show`による分析SQLの実行です。[Semanticモデルの公式仕様](https://docs.getdbt.com/docs/build/semantic-models?version=2)、[Derived](https://docs.getdbt.com/docs/build/derived)、[Cumulative](https://docs.getdbt.com/docs/build/cumulative)、[Conversion](https://docs.getdbt.com/docs/build/conversion)
 
 ### 列リネージの生成
 
@@ -241,6 +274,8 @@ mise run mcp
 ├── uv.lock                           # 依存パッケージの固定結果
 ├── dbt_project.yml                   # dbtのモデル配置・VIEW/TABLE・対応バージョン
 ├── profiles.yml                      # crm.duckdbへの接続、raw.duckdbのattach
+├── dbt_charts.yml                    # Chartsからcrm.duckdbへの直接接続
+├── charts/crm_conversion.yml         # 業種フィルター付き商談率ダッシュボード
 ├── raw.duckdb                        # 入力データ。Git管理するDB
 ├── models/
 │   ├── raw.yml                       # source('crm', ...)とraw.mainの対応
